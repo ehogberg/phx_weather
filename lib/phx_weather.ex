@@ -43,7 +43,8 @@ defmodule PhxWeather do
       :ok,
       %WeatherData{
         id: resp_body[:id],
-        updated_at: DateTime.utc_now(),
+        retrieved_at: DateTime.utc_now(),
+        data_updated_at: DateTime.from_unix!(resp_body[:dt]),
         name: resp_body[:name],
         curr_temp: resp_body[:main][:temp],
         feels_like: resp_body[:main][:feels_like],
@@ -62,7 +63,8 @@ defmodule PhxWeather do
     (%{status: status, body: body} = resp) = Req.get!(
       @openweather_geocode_api_path,
       [
-        params: [q: location_name, appid: openweather_app_id()]
+        params: [q: location_name, appid: openweather_app_id()],
+        decode_json: [keys: :atoms]
       ])
 
     case status do
@@ -74,15 +76,9 @@ defmodule PhxWeather do
   defp get_lat_lon_for_station_if_found([], location_name),
     do: {:error, :unknown_location, location_name}
 
-  defp get_lat_lon_for_station_if_found(body,_) do
+  defp get_lat_lon_for_station_if_found(body, _) do
     body = hd(body)
-    {
-      :ok,
-      Map.get(body, "lat"),
-      Map.get(body, "lon"),
-      Map.get(body, "state"),
-      Map.get(body, "country")
-    }
+    {:ok, body[:lat], body[:lon], body[:state], body[:country] }
   end
 
   defp openweather_app_id(),
