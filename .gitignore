@@ -37,3 +37,5 @@ npm-debug.log
 
 .tool-versions
 .env
+priv/cert/selfsigned_key.pem
+priv/cert/selfsigned.pem

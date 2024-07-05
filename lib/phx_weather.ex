@@ -10,8 +10,8 @@ defmodule PhxWeather do
   alias PhxWeather.WeatherData
 
   @openweather_base_api_path  "https://api.openweathermap.org"
-  @openweather_data_api_path "#{@openweather_base_api_path}/data/2.5/weather"
-  @openweather_geocode_api_path "#{@openweather_base_api_path}/geo/1.0/direct"
+  @openweather_data_api_path "/data/2.5/weather"
+  @openweather_geocode_api_path "/geo/1.0/direct"
 
   def retrieve_weather(name) when is_binary(name) do
     with  {:ok, lat, lon, state, country}  <- get_geocoded_location(name),
@@ -23,13 +23,14 @@ defmodule PhxWeather do
   end
 
   def retrieve_weather(lat, lon) when is_float(lat) and is_float(lon) do
-    (%{status: status, body: body} = resp) = Req.get!(
-      @openweather_data_api_path,
-      [
-        params: [lat: lat, lon: lon, units: "imperial", appid: openweather_app_id()],
-        decode_json: [keys: :atoms]
-      ]
-    )
+    get_weather_data(lat, lon)
+  end
+
+  def get_weather_data(lat, lon) do
+    (%{status: status, body: body} = resp) =
+      @openweather_data_api_path
+      |> openweather_api_request([lat: lat, lon: lon, units: "imperial"])
+      |> Req.get!()
 
     case status do
       200 -> extract_weather_data(body)
@@ -59,16 +60,15 @@ defmodule PhxWeather do
 
   end
 
-  defp get_geocoded_location(location_name) do
-    (%{status: status, body: body} = resp) = Req.get!(
-      @openweather_geocode_api_path,
-      [
-        params: [q: location_name, appid: openweather_app_id()],
-        decode_json: [keys: :atoms]
-      ])
+  def get_geocoded_location(location_name) do
+
+    (%{status: status, body: body} = resp) =
+      @openweather_geocode_api_path
+      |> openweather_api_request([q: location_name])
+      |> Req.get!(url: @openweather_geocode_api_path)
 
     case status do
-      200 -> get_lat_lon_for_station_if_found(body,location_name)
+      200 -> get_lat_lon_for_station_if_found(body, location_name)
       _ -> {:error, :geocoder_failure, resp}
     end
    end
@@ -79,6 +79,19 @@ defmodule PhxWeather do
   defp get_lat_lon_for_station_if_found(body, _) do
     body = hd(body)
     {:ok, body[:lat], body[:lon], body[:state], body[:country] }
+  end
+
+  def openweather_api_request(url, params \\ []) do
+    params = Keyword.put_new(params, :appid, openweather_app_id())
+
+    [
+      base_url: @openweather_base_api_path,
+      url: url,
+      params: params,
+      decode_json: [keys: :atoms]
+    ]
+    |> Keyword.merge(Application.get_env(:phx_weather, :openweather_req_options, []))
+    |> Req.new()
   end
 
   defp openweather_app_id(),
