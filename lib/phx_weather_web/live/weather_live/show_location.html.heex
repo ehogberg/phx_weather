@@ -1,0 +1,56 @@
+<div id={@dom_id} class="border border-brand/40  rounded-md h-48 md:h-44">
+  <.async_result :let={weather_data} assign={@weather_data}>
+    <:loading>
+      <div class="text-center mt-8">
+        <.icon name="hero-arrow-path" class="mr-1 w-3 h-3 animate-spin" />
+        Loading weather data....
+      </div>
+    </:loading>
+
+    <div>
+
+      <div class="flex bg-brand/50 rounded-t-md border-b pb-1 pr-2 mb-2 items-center justify-between" >
+        <div class="flex">
+          <div class="ml-0 mr-2">
+            <.weather_icon icon={weather_data.current_conditions_icon} />
+          </div>
+          <div class="text-pretty">
+            <h2 class="font-medium text-white text-xl">
+              <%= weather_data.name %>, <%= weather_data.state %>
+              <%= weather_data.country %>
+            </h2>
+            <span class="font-light text-white italic">
+              <%= weather_data.current_conditions %>
+            </span>
+          </div>
+        </div>
+        <div>
+          <span class="text-zinc-700 hover:text-white"
+            phx-click="remove_location" phx-value-location-id={@id}>
+            <.icon  name="hero-x-mark-mini" />
+          </span>
+        </div>
+      </div>
+
+      <div class="px-2 text-lg md:text-sm ">
+        <div class="pb-1">
+          Current temperature is <%= weather_data.curr_temp %>&deg; F.
+          &nbsp;
+          (Feels like <%= weather_data.feels_like %>&deg;)
+        </div>
+
+        <div class="pb-1">
+          Humidity is <%= weather_data.humidity %>%.
+          &nbsp;
+          Barometric pressure is <%= weather_data.barometric_pressure %> mb.
+        </div>
+
+        <div class="italic  text-sm md:text-xs text-center">
+          Last updated at <%= weather_data.data_updated_at %>
+          <br /> Retrieved at <%= weather_data.retrieved_at %>
+        </div>
+      </div>
+
+    </div>
+  </.async_result>
+</div>

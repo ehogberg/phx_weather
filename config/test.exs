@@ -17,9 +17,10 @@ config :phoenix, :plug_init_mode, :runtime
 config :phoenix_live_view,
   enable_expensive_runtime_checks: true
 
-config :phx_weather, openweather_req_options: [
-  plug: {Req.Test, PhxWeb.WeatherTest},
-  retry: false
-]
+config :phx_weather,
+  openweather_req_options: [
+    plug: {Req.Test, PhxWeb.WeatherTest},
+    retry: false
+  ]
 
 config :phx_weather, :openweather_api_key, ""

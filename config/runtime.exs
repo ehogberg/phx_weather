@@ -20,7 +20,17 @@ if System.get_env("PHX_SERVER") do
   config :phx_weather, PhxWeatherWeb.Endpoint, server: true
 end
 
+if config_env() != :test do
+  openweather_api_key =
+    System.get_env("OPENWEATHER_API_KEY") ||
+      raise """
+      environment variable OPENWEATHER_API_KEY is missing.
+      To generate one, visit https://home.openweathermap.org, create an account
+      there and retrieve the key from the account profile.
+      """
 
+  config :phx_weather, :openweather_api_key, openweather_api_key
+end
 
 if config_env() == :prod do
   # The secret key base is used to sign/encrypt cookies and other secrets.
@@ -28,15 +38,6 @@ if config_env() == :prod do
   # want to use a different value for prod and you most likely don't want
   # to check this value into version control, so we use an environment
   # variable instead.
-  openweather_api_key =
-    System.get_env("OPENWEATHER_API_KEY") ||
-    raise """
-    environment variable OPENWEATHER_API_KEY is missing.
-    To generate one, visit https://home.openweathermap.org, create an account
-    there and retrieve the key from the account profile.
-    """
-
-  config :phx_weather, :openweather_api_key, openweather_api_key
 
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||

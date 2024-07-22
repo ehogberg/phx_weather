@@ -7,13 +7,24 @@ defmodule PhxWeather.Application do
 
   @impl true
   def start(_type, _args) do
+    topologies = Application.get_env(:libcluster, :topologies, [])
+
     children = [
       PhxWeatherWeb.Telemetry,
-      {DNSCluster, query: Application.get_env(:phx_weather, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: PhxWeather.PubSub},
-      # Start a worker by calling: PhxWeather.Worker.start_link(arg)
-      # {PhxWeather.Worker, arg},
-      # Start to serve requests, typically the last entry
+      {Cluster.Supervisor, [topologies, [name: PhxWeather.ClusterSupervisor]]},
+      {Horde.DynamicSupervisor,
+       [
+         name: PhxWeather.WeatherSupervisor,
+         members: :auto,
+         strategy: :one_for_one
+       ]},
+      {Horde.Registry,
+       [
+         keys: :unique,
+         name: PhxWeather.WeatherRegistry,
+         members: :auto
+       ]},
       PhxWeatherWeb.Endpoint
     ]
 

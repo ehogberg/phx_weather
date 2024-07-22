@@ -8,92 +8,41 @@ defmodule PhxWeather do
   """
 
   alias PhxWeather.WeatherData
-
-  @openweather_base_api_path  "https://api.openweathermap.org"
-  @openweather_data_api_path "/data/2.5/weather"
-  @openweather_geocode_api_path "/geo/1.0/direct"
+  alias PhxWeather.OpenWeatherService
 
   def retrieve_weather(name) when is_binary(name) do
-    with  {:ok, lat, lon, state, country}  <- get_geocoded_location(name),
-          {:ok, %WeatherData{} = weather_data} <- retrieve_weather(lat, lon) do
-        weather_data
-        |> Map.put(:state, state)
-        |> Map.put(:country, country)
+    with {:ok, %{lat: _lat, lon: _lon} = geocode} <- OpenWeatherService.geocode_location(name),
+         {:ok, %WeatherData{}} = weather_data <- retrieve_weather(geocode) do
+      weather_data
     end
   end
 
-  def retrieve_weather(lat, lon) when is_float(lat) and is_float(lon) do
-    get_weather_data(lat, lon)
-  end
+  def retrieve_weather(%{lat: lat, lon: lon} = geocode) do
+    case WeatherData.get_weather(lat, lon) do
+      {:ok, %WeatherData{} = weather_data} ->
+        {
+          :ok,
+          weather_data
+          |> Map.put(:lat, lat)
+          |> Map.put(:lon, lon)
+          |> Map.put(:state, geocode[:state])
+          |> Map.put(:country, geocode[:country])
+        }
 
-  def get_weather_data(lat, lon) do
-    (%{status: status, body: body} = resp) =
-      @openweather_data_api_path
-      |> openweather_api_request([lat: lat, lon: lon, units: "imperial"])
-      |> Req.get!()
-
-    case status do
-      200 -> extract_weather_data(body)
-      _ -> {:error, :weather_data_retrieval, resp}
+      error ->
+        error
     end
   end
 
-  defp extract_weather_data(resp_body) do
-    curr_weather = resp_body[:weather] |> hd()
-    {
-      :ok,
-      %WeatherData{
-        id: resp_body[:id],
-        retrieved_at: DateTime.utc_now(),
-        data_updated_at: DateTime.from_unix!(resp_body[:dt]),
-        name: resp_body[:name],
-        curr_temp: resp_body[:main][:temp],
-        feels_like: resp_body[:main][:feels_like],
-        projected_high: resp_body[:main][:temp_max],
-        projected_low: resp_body[:main][:temp_min],
-        humidity: resp_body[:main][:humidity],
-        barometric_pressure: resp_body[:main][:pressure],
-        current_conditions: curr_weather[:description],
-        current_conditions_icon: curr_weather[:icon]
-      }
-    }
-
+  def geocode_location_list(locations) do
+    locations
+    |> Enum.map(&geocode_location/1)
+    |> Enum.split_with(fn
+      {:ok, _} -> true
+      _ -> false
+    end)
   end
 
-  def get_geocoded_location(location_name) do
-
-    (%{status: status, body: body} = resp) =
-      @openweather_geocode_api_path
-      |> openweather_api_request([q: location_name])
-      |> Req.get!(url: @openweather_geocode_api_path)
-
-    case status do
-      200 -> get_lat_lon_for_station_if_found(body, location_name)
-      _ -> {:error, :geocoder_failure, resp}
-    end
-   end
-
-  defp get_lat_lon_for_station_if_found([], location_name),
-    do: {:error, :unknown_location, location_name}
-
-  defp get_lat_lon_for_station_if_found(body, _) do
-    body = hd(body)
-    {:ok, body[:lat], body[:lon], body[:state], body[:country] }
-  end
-
-  def openweather_api_request(url, params \\ []) do
-    params = Keyword.put_new(params, :appid, openweather_app_id())
-
-    [
-      base_url: @openweather_base_api_path,
-      url: url,
-      params: params,
-      decode_json: [keys: :atoms]
-    ]
-    |> Keyword.merge(Application.get_env(:phx_weather, :openweather_req_options, []))
-    |> Req.new()
-  end
-
-  defp openweather_app_id(),
-    do: Application.fetch_env!(:phx_weather, :openweather_api_key)
+  def geocode_location(location),
+    do: OpenWeatherService.geocode_location(location)
 end

@@ -1,0 +1,34 @@
+<div class="text-lg md:text-sm text-center mb-2 md:mb-8 ">
+  <p>
+  Enter a place to see weather conditions for:
+  </p>
+
+  <.form for={@location_form}
+    phx-submit="add_location"
+    onkeydown="return event.key != 'Enter';">
+    <.input field={@location_form["location"]}
+      placeholder="e.g. London or Paris,FR or Springfield,MA,US"
+    />
+      <.button class="inline bg-brand/60 hover:bg-brand/70" type="submit">
+        <.icon name="hero-magnifying-glass-mini" />
+      </.button>
+  </.form>
+</div>
+
+<div
+  class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+  phx-update="stream"
+  id="location_container"
+  phx-hook="Geolocation"
+>
+  <%= for {location_dom_id, %{component_id: component_id, location: location}}
+        <- @streams.location_stream do %>
+    <.live_component
+      module={WeatherLive.ShowLocation}
+      dom_id={location_dom_id}
+      location={location}
+      id={component_id}
+      weather_data={nil}
+    />
+  <% end %>
+</div>

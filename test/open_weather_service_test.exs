@@ -1,8 +1,9 @@
-defmodule PhxWeatherTest do
+defmodule OpenWeatherServiceTest do
   use PhxWeatherWeb.ConnCase
   alias PhxWeather
 
   alias PhxWeather.WeatherData
+  alias PhxWeather.OpenWeatherService
 
   describe "get_geocoded_location/1" do
     test "works given valid data" do
@@ -10,8 +11,8 @@ defmodule PhxWeatherTest do
         Req.Test.json(conn, [%{lat: 10, lon: -10, state: "IL", country: "US"}])
       end)
 
-      assert {:ok, 10, -10, "IL", "US"} =
-        PhxWeather.get_geocoded_location("Chicago,IL,US")
+      assert {:ok, %{lat: 10, lon: -10, state: "IL", country: "US"}} =
+               OpenWeatherService.geocode_location("Chicago,IL,US")
     end
 
     test "when more than one location is returned, the first in the list is used" do
@@ -25,12 +26,11 @@ defmodule PhxWeatherTest do
         )
       end)
 
-      assert {:ok, 100, 200, "WI", "US"} =
-        PhxWeather.get_geocoded_location("Madison,WI,US")
+      assert {:ok, %{lat: 100, lon: 200, state: "WI", country: "US"}} =
+               OpenWeatherService.geocode_location("Madison,WI,US")
     end
 
     test "non-existant location is handled gracefully" do
-
       Req.Test.stub(PhxWeb.WeatherTest, fn conn ->
         Req.Test.json(conn, [])
       end)
@@ -38,7 +38,7 @@ defmodule PhxWeatherTest do
       location = "Chicago,IL,US"
 
       assert {:error, :unknown_location, ^location} =
-        PhxWeather.get_geocoded_location(location)
+               OpenWeatherService.geocode_location(location)
     end
 
     test "geocoder request failure is handled gracefully" do
@@ -47,7 +47,7 @@ defmodule PhxWeatherTest do
       end)
 
       assert {:error, :geocoder_failure, %Req.Response{}} =
-        PhxWeather.get_geocoded_location("Chicago, IL, US")
+               OpenWeatherService.geocode_location("Chicago, IL, US")
     end
   end
 
@@ -83,7 +83,7 @@ defmodule PhxWeatherTest do
       end)
 
       assert {:ok, %WeatherData{} = weather_data} =
-        PhxWeather.get_weather_data(100, -100)
+               OpenWeatherService.get_weather_data(100, -100)
 
       assert "Erewhon" == weather_data.name
       assert 100 == weather_data.id
@@ -103,7 +103,7 @@ defmodule PhxWeatherTest do
       end)
 
       assert {:error, :weather_data_retrieval, _} =
-        PhxWeather.get_weather_data(100,-100)
+               OpenWeatherService.get_weather_data(100, -100)
     end
   end
 end

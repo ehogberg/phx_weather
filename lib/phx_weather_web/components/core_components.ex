@@ -232,7 +232,7 @@ defmodule PhxWeatherWeb.CoreComponents do
       type={@type}
       class={[
         "phx-submit-loading:opacity-75 rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3",
-        "text-sm font-semibold leading-6 text-white active:text-white/80",
+        "text-lg font-semibold leading-6 text-white active:text-white/80",
         @class
       ]}
       {@rest}
@@ -369,7 +369,7 @@ defmodule PhxWeatherWeb.CoreComponents do
   # All other inputs text, datetime-local, url, password, etc. are handled here...
   def input(assigns) do
     ~H"""
-    <div>
+    <div class="inline">
       <.label for={@id}><%= @label %></.label>
       <input
         type={@type}
@@ -377,8 +377,10 @@ defmodule PhxWeatherWeb.CoreComponents do
         id={@id}
         value={Phoenix.HTML.Form.normalize_value(@type, @value)}
         class={[
-          "mt-2 block w-full rounded-lg text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
-          @errors == [] && "border-zinc-300 focus:border-zinc-400",
+          "w-3/4 md:w-2/3 xl:w-1/2 mb-2 rounded-lg text-zinc-900
+          placeholder:italic placeholder:text-sm
+          focus:ring-0 sm:text-sm sm:leading-6",
+          @errors == [] && "border-brand/30 focus:border-brand/70",
           @errors != [] && "border-rose-400 focus:border-rose-400"
         ]}
         {@rest}
