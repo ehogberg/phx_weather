@@ -17,9 +17,7 @@ defmodule PhxWeatherWeb.Router do
   scope "/", PhxWeatherWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
-
-    live "/weather", WeatherLive
+    live "/", WeatherLive
 
     live "/admin", AdminLive
   end

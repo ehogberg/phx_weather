@@ -7,7 +7,6 @@ Project Description
 ### Todo
 
 - [ ] Add localized tz support  
-- [ ] Map / to weather home and remove Phoenix intro page from router  
 - [ ] Improve README: add project overview and developer setup  
 - [ ] Containerize app and push container image to Docker  
 - [ ] Deploy to Google App Engine  
@@ -21,4 +20,5 @@ Project Description
 ### Done ✓
 
 - [x] Match location search button color to theme  
+- [x] Map / to weather home and remove Phoenix intro page from router  
 
