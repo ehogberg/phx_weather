@@ -54,6 +54,10 @@ defmodule PhxWeather.WeatherData do
     )
   end
 
+  def location(name_or_pid) do
+    GenServer.call(name_or_pid, :location)
+  end
+
   # GenServer impl below
   @impl true
   def init(attrs) do
@@ -78,6 +82,12 @@ defmodule PhxWeather.WeatherData do
   def handle_continue(:load_weather_data, %{lat: lat, lon: lon} = state) do
     case OpenWeatherService.get_weather_data(lat, lon) do
       {:ok, weather} ->
+        Phoenix.PubSub.broadcast(
+            PhxWeather.PubSub,
+            "weather_data_admin",
+            {:location_added, %{lat: lat, lon: lon}}
+        )
+
         Phoenix.PubSub.subscribe(
           PhxWeather.PubSub,
           "weather_data:#{weather.id}"
@@ -96,6 +106,18 @@ defmodule PhxWeather.WeatherData do
       error ->
         {:stop, error}
     end
+  end
+
+  @impl true
+  def handle_call(:location, _, state) do
+    {
+      :reply,
+      %{
+        lat: state.lat,
+        lon: state.lon
+      },
+      state
+    }
   end
 
   @impl true

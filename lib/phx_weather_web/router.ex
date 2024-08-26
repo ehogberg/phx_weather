@@ -20,6 +20,8 @@ defmodule PhxWeatherWeb.Router do
     get "/", PageController, :home
 
     live "/weather", WeatherLive
+
+    live "/admin", AdminLive
   end
 
   # Other scopes may use custom stacks.

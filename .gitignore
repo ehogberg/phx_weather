@@ -39,3 +39,4 @@ npm-debug.log
 .env
 priv/cert/selfsigned_key.pem
 priv/cert/selfsigned.pem
+assets/js/service_config.js
