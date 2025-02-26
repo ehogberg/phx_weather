@@ -1,4 +1,4 @@
-<div id={@dom_id} class="border border-brand/40  rounded-md h-48 md:h-44">
+<div id={@dom_id} class="border border-manatee  rounded-md h-48 md:h-44">
   <.async_result :let={weather_data} assign={@weather_data}>
     <:loading>
       <div class="text-center mt-8">
@@ -9,7 +9,7 @@
 
     <div>
 
-      <div class="flex bg-brand/50 rounded-t-md border-b pb-1 pr-2 mb-2 items-center justify-between" >
+      <div class="flex bg-rhino/70 rounded-t-md border-b pb-1 pr-2 mb-2 items-center justify-between" >
         <div class="flex">
           <div class="ml-0 mr-2">
             <.weather_icon icon={weather_data.current_conditions_icon} />
@@ -19,13 +19,13 @@
               <%= weather_data.name %>, <%= weather_data.state %>
               <%= weather_data.country %>
             </h2>
-            <span class="font-light text-white italic">
+            <span class="font-light text-alto italic">
               <%= weather_data.current_conditions %>
             </span>
           </div>
         </div>
         <div>
-          <span class="text-zinc-700 hover:text-white"
+          <span class="text-alto hover:text-white"
             phx-click="remove_location" phx-value-location-id={@id}>
             <.icon  name="hero-x-mark-mini" />
           </span>
@@ -45,9 +45,10 @@
           Barometric pressure is <%= weather_data.barometric_pressure %> mb.
         </div>
 
-        <div class="italic  text-sm md:text-xs text-center">
+        <div class="italic text-alto/120 text-sm mt-2 md:text-xs text-center">
           Last updated at <%= weather_data.data_updated_at %>
-          <br /> Retrieved at <%= weather_data.retrieved_at %>
+          <br />
+          Retrieved at <%= weather_data.retrieved_at %>
         </div>
       </div>
 

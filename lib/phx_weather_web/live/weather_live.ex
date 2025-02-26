@@ -29,11 +29,8 @@ defmodule PhxWeatherWeb.WeatherLive do
   end
 
   defp init_location_form(socket) do
-    assign(
-      socket,
-      :location_form,
-      to_form(%{"location" => ""})
-    )
+    socket
+    |> assign(:location_search, "")
   end
 
   @impl true
@@ -74,7 +71,16 @@ defmodule PhxWeatherWeb.WeatherLive do
   end
 
   @impl true
-  def handle_event("add_location", %{"location" => location}, socket) do
+  def handle_event("location_change", %{"location_search" => location_search},
+  socket) do
+    {
+      :noreply,
+      assign(socket, :location_search, location_search)
+    }
+  end
+
+  @impl true
+  def handle_event("add_location", %{"location_search" => location}, socket) do
     {
       :noreply,
       socket
@@ -85,6 +91,17 @@ defmodule PhxWeatherWeb.WeatherLive do
 
   @impl true
   def handle_event("remove_location", %{"location-id" => location_id}, socket) do
+    if Enum.count(socket.assigns.location_data) < 2 do
+      {
+        :noreply,
+        put_flash(socket, :error, "Can't remove the last remaining location.")
+      }
+    else
+      handle_remove_location(location_id, socket)
+    end
+  end
+
+  def handle_remove_location(location_id, socket) do
     location_id = String.to_integer(location_id)
 
     %{weather_data_id: weather_data_id} =

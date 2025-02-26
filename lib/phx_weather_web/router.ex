@@ -10,10 +10,6 @@ defmodule PhxWeatherWeb.Router do
     plug :put_secure_browser_headers
   end
 
-  pipeline :api do
-    plug :accepts, ["json"]
-  end
-
   scope "/", PhxWeatherWeb do
     pipe_through :browser
 
@@ -21,11 +17,6 @@ defmodule PhxWeatherWeb.Router do
 
     live "/admin", AdminLive
   end
-
-  # Other scopes may use custom stacks.
-  # scope "/api", PhxWeatherWeb do
-  #   pipe_through :api
-  # end
 
   # Enable LiveDashboard in development
   if Application.compile_env(:phx_weather, :dev_routes) do

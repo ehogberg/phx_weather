@@ -53,7 +53,7 @@ defmodule PhxWeatherWeb do
     quote do
       use Phoenix.LiveView,
         layout: {PhxWeatherWeb.Layouts, :app}
-
+      import PhxWeatherWeb.Helper
       unquote(html_helpers())
     end
   end
@@ -61,7 +61,7 @@ defmodule PhxWeatherWeb do
   def live_component do
     quote do
       use Phoenix.LiveComponent
-
+      import PhxWeatherWeb.Helper
       unquote(html_helpers())
     end
   end

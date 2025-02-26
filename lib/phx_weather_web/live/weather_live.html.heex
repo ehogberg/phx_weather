@@ -3,13 +3,14 @@
   Enter a place to see weather conditions for:
   </p>
 
-  <.form for={@location_form}
+  <.form for={ %{"location_search" => @location_search}}
+    :let={search_form}
     phx-submit="add_location"
-    onkeydown="return event.key != 'Enter';">
-    <.input field={@location_form["location"]}
+    phx-change="location_change">
+    <.input field={search_form["location_search"]}
       placeholder="e.g. London or Paris,FR or Springfield,MA,US"
     />
-      <.button class="inline bg-brand/40 hover:bg-brand/60" type="submit">
+      <.button class="bg-[#746F94] hover:bg-[#746F94]/80" type="submit">
         <.icon name="hero-magnifying-glass-mini" />
       </.button>
   </.form>

@@ -6,7 +6,7 @@ defmodule PhxWeather.WeatherData do
   alias Phoenix.PubSub
   require Logger
 
-  @acknowledgement_timeout 1000 * 60 * 30  # 30 minutes
+  @acknowledgement_timeout 60 * 2  # 2 minutes
 
   defstruct [
     :id,
@@ -80,6 +80,7 @@ defmodule PhxWeather.WeatherData do
 
   @impl true
   def handle_continue(:load_weather_data, %{lat: lat, lon: lon} = state) do
+
     case OpenWeatherService.get_weather_data(lat, lon) do
       {:ok, weather} ->
         Phoenix.PubSub.broadcast(
@@ -139,34 +140,30 @@ defmodule PhxWeather.WeatherData do
   end
 
   @impl true
-  def handle_info(:reload_weather_data, state) do
-    Logger.debug("Checking for updates to weather data (ID #{state.weather_data_id})")
+  def handle_info(
+    :reload_weather_data,
+    %{lat: _lat, lon: _lon,
+      weather_data_id: weather_data_id,
+      last_acknowledged_at: last_acknowledged_at} = state) do
 
-    weather_data =
-      case OpenWeatherService.get_weather_data(state.lat, state.lon) do
-        {:ok, %__MODULE__{} = latest_weather} ->
-          current_weather = hd(state.weather_data)
+    Logger.debug("Checking to see if any instance is still using weather data for id #{weather_data_id}")
 
-          if current_weather.data_updated_at != latest_weather.data_updated_at do
-            Process.send_after(self(), :publish_weather_data_update, 1_000)
-            [latest_weather | state.weather_data]
-          else
-            state.weather_data
-          end
+    Logger.debug("Current time: #{DateTime.utc_now()}, expiry: #{DateTime.add(last_acknowledged_at, @acknowledgement_timeout)}")
 
-        _ ->
-          state.weather_data
-      end
+    if DateTime.after?(
+      DateTime.utc_now(),
+      DateTime.add(last_acknowledged_at, @acknowledgement_timeout)) do
+      Logger.debug("Shutting down weather data #{weather_data_id} due to client inactivity.")
+      {:stop, {:shutdown, {:client_timeout, weather_data_id}}, state}
+    else
+      Logger.debug("Checking for updates to weather data (ID #{weather_data_id})")
+      reload_and_publish_weather_data(state)
+    end
 
-    {
-      :noreply,
-      %{
-        state
-        | weather_data: weather_data,
-          timer: Process.send_after(self(), :reload_weather_data, 60_000)
-      }
-    }
   end
+
+
+
 
   @impl true
   def handle_info(:publish_weather_data_update, state) do
@@ -194,5 +191,33 @@ defmodule PhxWeather.WeatherData do
   @impl true
   def handle_info(_evt, state) do
     {:noreply, state}
+  end
+
+  defp reload_and_publish_weather_data(state) do
+
+    weather_data =
+      case OpenWeatherService.get_weather_data(state.lat, state.lon) do
+        {:ok, %__MODULE__{} = latest_weather} ->
+          current_weather = hd(state.weather_data)
+
+          if current_weather.data_updated_at != latest_weather.data_updated_at do
+            Process.send_after(self(), :publish_weather_data_update, 1_000)
+            [latest_weather | state.weather_data]
+          else
+            state.weather_data
+          end
+
+        _ ->
+          state.weather_data
+      end
+
+    {
+      :noreply,
+      %{
+        state
+        | weather_data: weather_data,
+          timer: Process.send_after(self(), :reload_weather_data, 60_000)
+      }
+    }
   end
 end

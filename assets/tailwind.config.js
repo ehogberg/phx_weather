@@ -14,7 +14,11 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        brand: "#0D198D"
+        alto: "#D2D2D2",
+        manatee: "#8C87A6",
+        rhino: "#393266",
+        violet: "170F4C",
+        tolopea: "0c0243"
       }
     },
   },

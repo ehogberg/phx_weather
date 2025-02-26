@@ -42,7 +42,7 @@ defmodule PhxWeatherWeb.AdminLive do
   def all_active_locations() do
     PhxWeather.WeatherSupervisor
     |> Horde.DynamicSupervisor.which_children()
-    |> Enum.map(fn {_,pid,_,_} -> PhxWeather.WeatherData.location(pid) end)
+    |> Enum.map(fn {_, pid, _, _} -> PhxWeather.WeatherData.location(pid) end)
     |> Enum.map(fn %{lat: lat, lon: lon} -> [lon, lat] end)
   end
 end
