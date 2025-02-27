@@ -6,7 +6,7 @@ on:
             - main
 
 env:
-    PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+    PROJECT_ID: ${{ secrets.GKE_PROJECT_NAME }}
     GKE_CLUSTER: ${{ vars.GKE_CLUSTER }}
     GKE_ZONE: ${{ vars.GKE_ZONE }}
     IMAGE: phx-weather-image
