@@ -35,7 +35,7 @@ jobs:
                 with:
                     cluster_name: ${{ env.GKE_CLUSTER }}
                     location: ${{ env.GKE_ZONE }}
-                    project_id: ${{ secrets.GKE_PROJECT_NAME }}
+
 
             -   name: Build
                 run: |-
