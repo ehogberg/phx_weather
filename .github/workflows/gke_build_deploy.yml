@@ -46,4 +46,4 @@ jobs:
                         .
             -   name: Publish
                 run: |-
-                    docker push "$GKE_ZONE-docker.pkg.dev/$PROJECT_ID/$IMAGE:$GITHUB_SHA"
+                    docker push "$GKE_ZONE-docker.pkg.dev/$PROJECT_ID/hogberg-portfolio-registry/$IMAGE:$GITHUB_SHA"
