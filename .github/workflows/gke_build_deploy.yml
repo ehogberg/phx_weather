@@ -9,6 +9,7 @@ env:
     PROJECT_ID: ${{ secrets.GKE_PROJECT_NAME }}
     GKE_CLUSTER: ${{ vars.GKE_CLUSTER }}
     GKE_ZONE: ${{ vars.GKE_ZONE }}
+    REG_ID: ${{ vars.GKE_ZONE }}-docker.pkg.dev/${{ secrets.GKE_PROJECT_NAME }}/${{ secrets.GKE_REGISTRY_NAME }}
     IMAGE: phx-weather-image
 
 jobs:
@@ -40,10 +41,10 @@ jobs:
             -   name: Build
                 run: |-
                     docker build \
-                        --tag "$GKE_ZONE-docker.pkg.dev/$PROJECT_ID/hogberg-portfolio-registry/$IMAGE:$GITHUB_SHA" \
+                        --tag "$REG_ID/$IMAGE:$GITHUB_SHA" \
                         --build-arg GITHUB_SHA="$GITHUB_SHA" \
                         --build-arg GITHUB_REF="$GITHUB_REF" \
                         .
             -   name: Publish
                 run: |-
-                    docker push "$GKE_ZONE-docker.pkg.dev/$PROJECT_ID/hogberg-portfolio-registry/$IMAGE:$GITHUB_SHA"
+                    docker push "$REG_ID/$IMAGE:$GITHUB_SHA"
