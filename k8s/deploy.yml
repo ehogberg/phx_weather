@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phx-weather-application
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: phx-weather-application
+  template:
+    metadata:
+      labels:
+        app: phx-weather-application
+    spec:
+      containers:
+      - name: phx-weather
+        image: phx-weather-image
+        ports:
+        - containerPort: 8080
+        env:
+        - name: OPENWEATHER_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: phx-weather-config
+              key: openweather-service-api-key
+        - name: SECRET_KEY_BASE
+          valueFrom:
+            secretKeyRef:
+              name: phx-weather-config
+              key: phoenix-secret-key-base
+        - name: PORT
+          valueFrom:
+            secretKeyRef:
+              name: phx-weather-config
+              key: phoenix-port

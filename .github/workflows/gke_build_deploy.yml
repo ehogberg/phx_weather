@@ -10,6 +10,8 @@ env:
     GKE_CLUSTER: ${{ vars.GKE_CLUSTER }}
     GKE_ZONE: ${{ vars.GKE_ZONE }}
     REG_ID: ${{ vars.GKE_ZONE }}-docker.pkg.dev/${{ secrets.GKE_PROJECT_NAME }}/${{ secrets.GKE_REGISTRY_NAME }}
+    CONTAINER_NAME: ${{ secrets.GKE_CONTAINER_NAME }}
+    DEPLOYMENT_NAME: ${{ secrets.GKE_DEPLOYMENT_NAME }}
     IMAGE: phx-weather-image
 
 jobs:
@@ -48,3 +50,10 @@ jobs:
             -   name: Publish
                 run: |-
                     docker push "$REG_ID/$IMAGE:$GITHUB_SHA"
+
+            -   name: Deploy
+                run: |-
+                    kubectl set image -f ./k8s/deploy.yml \
+                        "$CONTAINER_NAME=$REG_ID/$IMAGE:$GITHUB_SHA"
+                    kubectl rollout status "$DEPLOYMENT_NAME"
+                    kubectl get services -o wide
