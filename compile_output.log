@@ -1,0 +1,12 @@
+==> credo
+Compiling 252 files (.ex)
+
+== Compilation error in file lib/credo/check/config_comment_finder.ex ==
+** (Regex.CompileError) invalid range in character class at position 16
+    (elixir 1.19.1) lib/regex.ex:244: Regex.compile!/2
+    (elixir 1.19.1) lib/kernel.ex:6649: Kernel.compile_regex/2
+    (elixir 1.19.1) expanding macro: Kernel.sigil_r/2
+    lib/credo/check/config_comment_finder.ex:9: Credo.Check.ConfigCommentFinder (module)
+    (elixir 1.19.1) expanding macro: Kernel.@/1
+    lib/credo/check/config_comment_finder.ex:9: Credo.Check.ConfigCommentFinder (module)
+could not compile dependency :credo, "mix compile" failed. Errors may have been logged above. You can recompile this dependency with "mix deps.compile credo --force", update it with "mix deps.update credo" or clean it with "mix deps.clean credo"

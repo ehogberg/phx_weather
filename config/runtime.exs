@@ -49,11 +49,19 @@ if config_env() == :prod do
   host = System.get_env("PHX_HOST") || "example.com"
   port = String.to_integer(System.get_env("PORT") || "4000")
 
+  # Allow configuring allowed origins for WebSocket connections
+  # Format: comma-separated list like "//example.com,//www.example.com"
+  check_origin =
+    case System.get_env("PHX_CHECK_ORIGIN") do
+      nil -> ["//#{host}"]
+      origins -> String.split(origins, ",")
+    end
+
   config :phx_weather, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :phx_weather, PhxWeatherWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
-    check_origin: ["//weather.erichogberg.com"],
+    check_origin: check_origin,
     http: [
       # Enable IPv6 and bind on all interfaces.
       # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.

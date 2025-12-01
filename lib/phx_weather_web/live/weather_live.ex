@@ -54,14 +54,14 @@ defmodule PhxWeatherWeb.WeatherLive do
        do: socket
 
   defp warn_on_invalid_locations(socket, invalid_locations) do
-    _locations_warning_string = invalid_locations_message(invalid_locations)
+    locations_list = invalid_locations
+      |> Enum.map(fn {:error, _, location} -> location end)
+      |> Enum.join(", ")
+
+    message = "Can't find the following location(s): #{locations_list}"
 
     socket
-    |> put_flash(:error, "Can't find a location:<br> Erehwon")
-  end
-
-  defp invalid_locations_message(_invalid_locations) do
-    ""
+    |> put_flash(:error, message)
   end
 
   defp load_initial_locations(socket, locations) do
@@ -181,7 +181,8 @@ defmodule PhxWeatherWeb.WeatherLive do
   end
 
   defp create_and_insert_geocode(socket, geo) do
-    component_id = :rand.uniform(1_000_000_000)
+    # Generate a unique component ID using timestamp + random bytes
+    component_id = System.system_time(:microsecond) + :rand.uniform(1_000_000)
     component = %{
       component_id: component_id,
       location: geo,

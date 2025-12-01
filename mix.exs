@@ -44,7 +44,7 @@ defmodule PhxWeather.MixProject do
        app: false,
        compile: false,
        depth: 1},
-      {:horde, "~> 0.8.5"},
+      {:horde, "~> 0.10.0"},
       {:jason, "~> 1.2"},
       {:libcluster, "~> 3.3"},
       {:phoenix, "~> 1.7.14"},

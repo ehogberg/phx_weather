@@ -19,6 +19,7 @@ config :phx_weather, PhxWeatherWeb.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
+  # Hardcoded secret for development only - DO NOT use in production
   secret_key_base: "lYx7nSrxajumqhAJ1Ra1wYJ8qImmi4lhb5R2+VU8+Ab0uql8Z2qFEXqIcsY+1UKF",
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:phx_weather, ~w(--sourcemap=inline --watch)]},
