@@ -8,6 +8,8 @@ services:
     image: phx_weather:latest
     container_name: phx_weather_1
     restart: unless-stopped
+    ports:
+      - "4001:4000"
     environment:
       - PHX_SERVER=true
       - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
@@ -35,6 +37,8 @@ services:
     image: phx_weather:latest
     container_name: phx_weather_2
     restart: unless-stopped
+    ports:
+      - "4002:4000"
     environment:
       - PHX_SERVER=true
       - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
@@ -62,6 +66,8 @@ services:
     image: phx_weather:latest
     container_name: phx_weather_3
     restart: unless-stopped
+    ports:
+      - "4003:4000"
     environment:
       - PHX_SERVER=true
       - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
@@ -79,21 +85,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    networks:
-      - phx_network
-
-  nginx:
-    image: nginx:alpine
-    container_name: phx_weather_nginx
-    restart: unless-stopped
-    ports:
-      - "${PORT:-80}:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - phx_weather_1
-      - phx_weather_2
-      - phx_weather_3
     networks:
       - phx_network
 

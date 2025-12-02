@@ -61,6 +61,6 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
-            docker-compose pull
-            docker-compose up -d
+            docker-compose -f docker-compose.clustered.yml pull
+            docker-compose -f docker-compose.clustered.yml up -d
             docker-compose logs --tail=50
