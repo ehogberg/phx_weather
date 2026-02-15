@@ -12,9 +12,11 @@ defmodule PhxWeather.WeatherData do
   alias Phoenix.PubSub
   require Logger
 
-  @acknowledgement_timeout 60 * 2  # 2 minutes
+  # 2 minutes
+  @acknowledgement_timeout 60 * 2
   @max_retry_attempts 3
-  @initial_retry_delay 1_000  # 1 second
+  # 1 second
+  @initial_retry_delay 1_000
 
   defstruct [
     :id,
@@ -75,7 +77,7 @@ defmodule PhxWeather.WeatherData do
     {
       :ok,
       %{
-        weather_data: [],
+        weather_data: nil,
         weather_data_id: nil,
         lat: lat,
         lon: lon,
@@ -99,9 +101,9 @@ defmodule PhxWeather.WeatherData do
         )
 
         Phoenix.PubSub.broadcast(
-            PhxWeather.PubSub,
-            "weather_data_admin",
-            {:location_added, %{lat: lat, lon: lon}}
+          PhxWeather.PubSub,
+          "weather_data_admin",
+          {:location_added, %{lat: lat, lon: lon}}
         )
 
         Phoenix.PubSub.subscribe(
@@ -113,7 +115,7 @@ defmodule PhxWeather.WeatherData do
           :noreply,
           %{
             state
-            | weather_data: [weather],
+            | weather_data: weather,
               weather_data_id: weather.id,
               timer: Process.send_after(self(), :reload_weather_data, 60_000),
               retry_count: 0,
@@ -122,7 +124,9 @@ defmodule PhxWeather.WeatherData do
         }
 
       error ->
-        Logger.warning("Failed to initialize weather data for location #{lat},#{lon}: #{inspect(error)}")
+        Logger.warning(
+          "Failed to initialize weather data for location #{lat},#{lon}: #{inspect(error)}"
+        )
 
         :telemetry.execute(
           [:phx_weather, :weather_data, :init_failed],
@@ -132,8 +136,11 @@ defmodule PhxWeather.WeatherData do
 
         if retry_count < @max_retry_attempts do
           # Exponential backoff: 1s, 2s, 4s
-          delay = @initial_retry_delay * :math.pow(2, retry_count) |> trunc()
-          Logger.info("Retrying weather data fetch for #{lat},#{lon} in #{delay}ms (attempt #{retry_count + 1}/#{@max_retry_attempts})")
+          delay = (@initial_retry_delay * :math.pow(2, retry_count)) |> trunc()
+
+          Logger.info(
+            "Retrying weather data fetch for #{lat},#{lon} in #{delay}ms (attempt #{retry_count + 1}/#{@max_retry_attempts})"
+          )
 
           Process.send_after(self(), :retry_load_weather_data, delay)
 
@@ -142,7 +149,10 @@ defmodule PhxWeather.WeatherData do
             %{state | retry_count: retry_count + 1}
           }
         else
-          Logger.error("Failed to initialize weather data for #{lat},#{lon} after #{@max_retry_attempts} attempts, stopping GenServer")
+          Logger.error(
+            "Failed to initialize weather data for #{lat},#{lon} after #{@max_retry_attempts} attempts, stopping GenServer"
+          )
+
           {:stop, {:initialization_failed, error}, state}
         end
     end
@@ -163,18 +173,16 @@ defmodule PhxWeather.WeatherData do
   @impl true
   def handle_call(:get_weather, _, state) do
     resp =
-      if state.weather_data == [] do
+      if state.weather_data == nil do
         {:error, :no_weather_data_retrieved}
       else
-        hd(state.weather_data)
+        state.weather_data
       end
 
     {
       :reply,
       {:ok, resp},
-      %{state |
-        last_acknowledged_at: DateTime.utc_now()
-      }
+      %{state | last_acknowledged_at: DateTime.utc_now()}
     }
   end
 
@@ -185,18 +193,26 @@ defmodule PhxWeather.WeatherData do
 
   @impl true
   def handle_info(
-    :reload_weather_data,
-    %{lat: _lat, lon: _lon,
-      weather_data_id: weather_data_id,
-      last_acknowledged_at: last_acknowledged_at} = state) do
+        :reload_weather_data,
+        %{
+          lat: _lat,
+          lon: _lon,
+          weather_data_id: weather_data_id,
+          last_acknowledged_at: last_acknowledged_at
+        } = state
+      ) do
+    Logger.debug(
+      "Checking to see if any instance is still using weather data for id #{weather_data_id}"
+    )
 
-    Logger.debug("Checking to see if any instance is still using weather data for id #{weather_data_id}")
-
-    Logger.debug("Current time: #{DateTime.utc_now()}, expiry: #{DateTime.add(last_acknowledged_at, @acknowledgement_timeout)}")
+    Logger.debug(
+      "Current time: #{DateTime.utc_now()}, expiry: #{DateTime.add(last_acknowledged_at, @acknowledgement_timeout)}"
+    )
 
     if DateTime.after?(
-      DateTime.utc_now(),
-      DateTime.add(last_acknowledged_at, @acknowledgement_timeout)) do
+         DateTime.utc_now(),
+         DateTime.add(last_acknowledged_at, @acknowledgement_timeout)
+       ) do
       Logger.info("Shutting down weather data #{weather_data_id} due to client inactivity.")
 
       :telemetry.execute(
@@ -210,11 +226,7 @@ defmodule PhxWeather.WeatherData do
       Logger.debug("Checking for updates to weather data (ID #{weather_data_id})")
       reload_and_publish_weather_data(state)
     end
-
   end
-
-
-
 
   @impl true
   def handle_info(:publish_weather_data_update, state) do
@@ -223,7 +235,7 @@ defmodule PhxWeather.WeatherData do
     PubSub.broadcast(
       PhxWeather.PubSub,
       "weather_data:#{state.weather_data_id}",
-      {:weather_data_updated, %{id: state.weather_data_id, weather_data: hd(state.weather_data)}}
+      {:weather_data_updated, %{id: state.weather_data_id, weather_data: state.weather_data}}
     )
 
     {:noreply, state}
@@ -253,15 +265,15 @@ defmodule PhxWeather.WeatherData do
           %{lat: state.lat, lon: state.lon, status: :success}
         )
 
-        current_weather = hd(state.weather_data)
         consecutive_failures = 0
 
-        weather_data = if current_weather.data_updated_at != latest_weather.data_updated_at do
-          Process.send_after(self(), :publish_weather_data_update, 1_000)
-          [latest_weather | state.weather_data]
-        else
-          state.weather_data
-        end
+        weather_data =
+          if state.weather_data.data_updated_at != latest_weather.data_updated_at do
+            Process.send_after(self(), :publish_weather_data_update, 1_000)
+            latest_weather
+          else
+            state.weather_data
+          end
 
         {
           :noreply,
@@ -278,20 +290,25 @@ defmodule PhxWeather.WeatherData do
 
         Logger.warning(
           "Failed to reload weather data for #{state.lat},#{state.lon} " <>
-          "(consecutive failures: #{consecutive_failures}): #{inspect(error)}"
+            "(consecutive failures: #{consecutive_failures}): #{inspect(error)}"
         )
 
         :telemetry.execute(
           [:phx_weather, :weather_data, :api_call],
           %{count: 1},
-          %{lat: state.lat, lon: state.lon, status: :failure, consecutive_failures: consecutive_failures}
+          %{
+            lat: state.lat,
+            lon: state.lon,
+            status: :failure,
+            consecutive_failures: consecutive_failures
+          }
         )
 
         # Alert on multiple consecutive failures
         if consecutive_failures >= 5 do
           Logger.error(
             "Weather data for #{state.lat},#{state.lon} has failed #{consecutive_failures} times consecutively. " <>
-            "Consider checking API connectivity or rate limits."
+              "Consider checking API connectivity or rate limits."
           )
         end
 

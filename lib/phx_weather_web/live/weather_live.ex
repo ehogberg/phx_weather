@@ -6,6 +6,8 @@ defmodule PhxWeatherWeb.WeatherLive do
   alias PhxWeatherWeb.WeatherLive.ShowLocation
   require Logger
 
+  @default_locations "Chicago|London|Paris"
+
   @impl true
   @spec mount(any(), any(), Phoenix.LiveView.Socket.t()) :: {:ok, map()}
   def mount(_params, _session, socket) do
@@ -37,7 +39,7 @@ defmodule PhxWeatherWeb.WeatherLive do
   def handle_params(params, _uri, socket) do
     {valid_locations, invalid_locations} =
       params
-      |> Map.get("locations", "Chicago|London|Paris")
+      |> Map.get("locations", @default_locations)
       |> String.split("|")
       |> PhxWeather.geocode_location_list()
 
@@ -54,7 +56,8 @@ defmodule PhxWeatherWeb.WeatherLive do
        do: socket
 
   defp warn_on_invalid_locations(socket, invalid_locations) do
-    locations_list = invalid_locations
+    locations_list =
+      invalid_locations
       |> Enum.map(fn {:error, _, location} -> location end)
       |> Enum.join(", ")
 
@@ -71,8 +74,7 @@ defmodule PhxWeatherWeb.WeatherLive do
   end
 
   @impl true
-  def handle_event("location_change", %{"location_search" => location_search},
-  socket) do
+  def handle_event("location_change", %{"location_search" => location_search}, socket) do
     {
       :noreply,
       assign(socket, :location_search, location_search)
@@ -90,6 +92,20 @@ defmodule PhxWeatherWeb.WeatherLive do
   end
 
   @impl true
+  def handle_event("add_geolocation", %{"lat" => lat, "lon" => lon}, socket) do
+    geo = %{lat: lat, lon: lon, state: nil, country: nil}
+
+    {
+      :noreply,
+      if tracked_location?(socket.assigns.location_data, lat, lon) do
+        socket
+      else
+        create_and_insert_geocode(socket, geo)
+      end
+    }
+  end
+
+  @impl true
   def handle_event("remove_location", %{"location-id" => location_id}, socket) do
     if Enum.count(socket.assigns.location_data) < 2 do
       {
@@ -101,20 +117,24 @@ defmodule PhxWeatherWeb.WeatherLive do
     end
   end
 
-  def handle_remove_location(location_id, socket) do
-    location_id = String.to_integer(location_id)
+  defp handle_remove_location(location_id_str, socket) do
+    case Integer.parse(location_id_str) do
+      {location_id, ""} ->
+        %{weather_data_id: weather_data_id} =
+          Map.get(socket.assigns.location_data, location_id)
 
-    %{weather_data_id: weather_data_id} =
-      Map.get(socket.assigns.location_data, location_id)
+        PhxWeatherWeb.Endpoint.unsubscribe("weather_data:#{weather_data_id}")
 
-    PhxWeatherWeb.Endpoint.unsubscribe("weather_data:#{weather_data_id}")
+        {
+          :noreply,
+          socket
+          |> stream_delete(:location_stream, %{component_id: location_id})
+          |> assign(:location_data, Map.delete(socket.assigns.location_data, location_id))
+        }
 
-    {
-      :noreply,
-      socket
-      |> stream_delete(:location_stream, %{component_id: location_id})
-      |> assign(:location_data, Map.delete(socket.assigns.location_data, location_id))
-    }
+      _ ->
+        {:noreply, socket}
+    end
   end
 
   @impl true
@@ -175,6 +195,7 @@ defmodule PhxWeatherWeb.WeatherLive do
         else
           create_and_insert_geocode(socket, geo)
         end
+
       _ ->
         put_flash(socket, :error, "#{location} could not be found.")
     end
@@ -183,6 +204,7 @@ defmodule PhxWeatherWeb.WeatherLive do
   defp create_and_insert_geocode(socket, geo) do
     # Generate a unique component ID using timestamp + random bytes
     component_id = System.system_time(:microsecond) + :rand.uniform(1_000_000)
+
     component = %{
       component_id: component_id,
       location: geo,

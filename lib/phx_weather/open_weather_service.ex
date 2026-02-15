@@ -78,7 +78,8 @@ defmodule PhxWeather.OpenWeatherService do
       base_url: @openweather_base_api_path,
       url: url,
       params: params,
-      decode_json: [keys: :atoms]
+      decode_json: [keys: :atoms],
+      receive_timeout: 10_000
     ]
     |> Keyword.merge(Application.get_env(:phx_weather, :openweather_req_options, []))
     |> Req.new()

@@ -3,6 +3,10 @@ defmodule PhxWeatherWeb.AdminLive do
 
   @impl true
   def mount(_, _, socket) do
+    if connected?(socket) do
+      PhxWeatherWeb.Endpoint.subscribe("weather_data_admin")
+    end
+
     {
       :ok,
       socket
@@ -11,14 +15,13 @@ defmodule PhxWeatherWeb.AdminLive do
 
   @impl true
   def handle_event("after_map_render", _, socket) do
-    PhxWeatherWeb.Endpoint.subscribe("weather_data_admin")
-
     {
       :noreply,
       socket
       |> push_event(
         "initiate_weather_data",
-        %{weather_stations: all_active_locations()})
+        %{weather_stations: all_active_locations()}
+      )
     }
   end
 
@@ -39,7 +42,7 @@ defmodule PhxWeatherWeb.AdminLive do
     }
   end
 
-  def all_active_locations() do
+  defp all_active_locations() do
     PhxWeather.WeatherSupervisor
     |> Horde.DynamicSupervisor.which_children()
     |> Enum.map(fn {_, pid, _, _} -> PhxWeather.WeatherData.location(pid) end)

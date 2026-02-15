@@ -10,12 +10,25 @@ defmodule PhxWeatherWeb.Router do
     plug :put_secure_browser_headers
   end
 
+  pipeline :admin_auth do
+    plug :basic_auth
+  end
+
   scope "/", PhxWeatherWeb do
     pipe_through :browser
 
     live "/", WeatherLive
+  end
+
+  scope "/", PhxWeatherWeb do
+    pipe_through [:browser, :admin_auth]
 
     live "/admin", AdminLive
+  end
+
+  defp basic_auth(conn, _opts) do
+    config = Application.get_env(:phx_weather, :basic_auth, username: "admin", password: "admin")
+    Plug.BasicAuth.basic_auth(conn, config)
   end
 
   # Enable LiveDashboard in development

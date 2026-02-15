@@ -17,29 +17,34 @@ const mapTrace = {
         const weather_data = await await_weather_data()
 
         for (const location of weather_data.weather_stations) {
-            new mapboxgl.Marker()
+            const marker = new mapboxgl.Marker()
                 .setLngLat(location)
                 .addTo(map)
-                .getElement()
-                .addEventListener("click", (event) => {
-                    console.debug(event)
-                })
+
+            marker.getElement().addEventListener("click", () => {
+                new mapboxgl.Popup()
+                    .setLngLat(location)
+                    .setHTML(`<p>${location[1].toFixed(2)}°, ${location[0].toFixed(2)}°</p>`)
+                    .addTo(map)
+            })
         }
 
         map.resize()
 
         window.addEventListener("phx:location_added", (event) => {
-            console.debug("new location received")
+            const new_location = event.detail
+            const lngLat = [new_location.lon, new_location.lat]
 
-            new_location = event.detail
-
-            new mapboxgl.Marker()
-                .setLngLat([new_location.lon, new_location.lat])
+            const marker = new mapboxgl.Marker()
+                .setLngLat(lngLat)
                 .addTo(map)
-                .getElement()
-                .addEventListener("click", (event) => {
-                    console.debug("clicked")
-                })
+
+            marker.getElement().addEventListener("click", () => {
+                new mapboxgl.Popup()
+                    .setLngLat(lngLat)
+                    .setHTML(`<p>${new_location.lat.toFixed(2)}°, ${new_location.lon.toFixed(2)}°</p>`)
+                    .addTo(map)
+            })
         })
     },
 
