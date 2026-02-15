@@ -1,0 +1,5 @@
+{
+    "postman.settings.dotenv-detection-notification-visibility": false,
+    "calva.enabled": false,
+    "clojure-lsp.enable": false
+}
