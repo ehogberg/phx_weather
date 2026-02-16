@@ -78,6 +78,8 @@ config :phoenix_live_view,
   # Enable helpful, but potentially expensive runtime checks
   enable_expensive_runtime_checks: true
 
+config :phx_weather, :basic_auth, username: "admin", password: "admin"
+
 # Local EPMD-based cluster formation
 config :libcluster, :topologies,
   local_epmd: [

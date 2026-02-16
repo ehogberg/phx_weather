@@ -42,3 +42,6 @@ priv/cert/selfsigned.pem
 
 # React Component Preview
 previewConfig.json
+
+# Developer-specific IDE preferences
+.vscode/settings.json
