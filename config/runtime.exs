@@ -33,9 +33,23 @@ if config_env() != :test do
 end
 
 if config_env() == :prod do
+  admin_username =
+    System.get_env("ADMIN_USERNAME") ||
+      raise """
+      environment variable ADMIN_USERNAME is missing.
+      Set it to configure the admin dashboard username.
+      """
+
+  admin_password =
+    System.get_env("ADMIN_PASSWORD") ||
+      raise """
+      environment variable ADMIN_PASSWORD is missing.
+      Set it to configure the admin dashboard password.
+      """
+
   config :phx_weather, :basic_auth,
-    username: System.get_env("ADMIN_USERNAME", "admin"),
-    password: System.get_env("ADMIN_PASSWORD", "admin")
+    username: admin_username,
+    password: admin_password
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you

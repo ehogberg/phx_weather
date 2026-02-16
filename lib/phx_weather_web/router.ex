@@ -27,7 +27,7 @@ defmodule PhxWeatherWeb.Router do
   end
 
   defp basic_auth(conn, _opts) do
-    config = Application.get_env(:phx_weather, :basic_auth, username: "admin", password: "admin")
+    config = Application.fetch_env!(:phx_weather, :basic_auth)
     Plug.BasicAuth.basic_auth(conn, config)
   end
 
